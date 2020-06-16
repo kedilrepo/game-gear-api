@@ -51,11 +51,11 @@ fun Routing.content() {
         // Get last position
         val lastPosition = transaction {
             val structure = PageStructure.find { (PageStructures.position eq PageStructures.position.max()) and (PageStructures.page eq page.pageID) }.firstOrNull()
-                ?: return@transaction 0
+                ?: return@transaction 0L
             structure.position
         }
 
-        var nextPosition = lastPosition + 1L
+        var nextPosition = lastPosition.plus(1)
 
 
         // Add Data now just add the end (append)
@@ -120,7 +120,7 @@ fun Routing.content() {
                     print("Not found this type of Module")
                 }
             }
-            nextPosition += 1L
+            nextPosition++
         }
 
         // To add data in between: alle, bei denen position über (Zahl) ist, selecten und dort die position +1 setzen -> an (Zahl) einsetzen
