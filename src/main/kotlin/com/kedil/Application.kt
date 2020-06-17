@@ -23,6 +23,7 @@ import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import io.ktor.util.KtorExperimentalAPI
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -31,9 +32,9 @@ fun main(args: Array<String>) {
     embeddedServer(Netty, port = 8082, module = Application::mainModule).start(wait = true)
 }
 
+@KtorExperimentalAPI
 @KtorExperimentalLocationsAPI
 @Suppress("unused") // Referenced in application.conf
-@kotlin.jvm.JvmOverloads
 fun Application.mainModule() {
     val config = HikariConfig().apply {
         jdbcUrl = Config.JDBC_STRING

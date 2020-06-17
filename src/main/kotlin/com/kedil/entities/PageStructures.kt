@@ -36,3 +36,13 @@ data class ManagerSnippet(
     val addOn: Boolean,
     val content: List<ContentType>
 )
+
+data class InsertSnippet(
+    val page: String,
+    val content: ContentType,
+    val position: Long
+)
+
+data class DeleteSnippet(
+    val structureId: Long
+)

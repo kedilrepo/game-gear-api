@@ -5,7 +5,7 @@ object ContentTypes {
     const val TITLE = "title"
 
     // Self-Explaining
-    const val TEXT_WITH_LEFT_PCITURE = "textwithleftpicture"
+    const val TEXT_WITH_LEFT_PICTURE = "textwithleftpicture"
 
     // Self-Explaining
     const val TEXT_WITH_RIGHT_PICTURE = "textwithrightpicture"

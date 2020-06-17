@@ -42,6 +42,14 @@ dependencies {
 
 application {mainClassName = "com.kedil.ApplicationKt"}
 
+tasks {
+    compileKotlin {
+        kotlinOptions {
+            freeCompilerArgs = freeCompilerArgs + "-Xopt-in=kotlin.RequiresOptIn"
+        }
+    }
+}
+
 tasks.withType<Jar> {
     manifest {
         attributes(

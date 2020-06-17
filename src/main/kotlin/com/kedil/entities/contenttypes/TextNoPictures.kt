@@ -22,6 +22,11 @@ class TextNoPicture(id: EntityID<Long>) : LongEntity(id) {
 
     val tnpId
         get() = id.value
+
+    fun toSnippet() = ContentTextNoPicture(
+        this.title,
+        this.mainText
+    )
 }
 
 

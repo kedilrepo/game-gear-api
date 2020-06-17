@@ -24,6 +24,12 @@ class TextRightPicture(id: EntityID<Long>) : LongEntity(id) {
 
     val trpId
         get() = id.value
+
+    fun toSnippet() = ContentTextRightPicture(
+        this.title,
+        this.imageUrl,
+        this.mainText
+    )
 }
 
 data class ContentTextRightPicture(val title: String, @JsonProperty("image_url") val imageUrl: String, @JsonProperty("main_text") val mainText: String) : ContentType

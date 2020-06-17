@@ -25,6 +25,12 @@ class Title(id: EntityID<Long>) : LongEntity(id) {
     var subTitle by Titles.subTitle
     val titleId
         get() = id.value
+
+    fun toSnippet() = ContentTitle(
+        this.title,
+        this.backgroundImage,
+        this.subTitle
+    )
 }
 
-data class ContentTitle(val title: String, @JsonProperty("background_image") val backgroundImage: String, @JsonProperty("sub_title") val subTitle: String) : ContentType
+data class ContentTitle(val title: String, @JsonProperty("background_image") val backgroundImage: String?, @JsonProperty("sub_title") val subTitle: String?) : ContentType
