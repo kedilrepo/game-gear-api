@@ -1,6 +1,7 @@
 package com.kedil.entities
 
 import ContentType
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.relops.snowflake.Snowflake
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
@@ -44,5 +45,13 @@ data class InsertSnippet(
 )
 
 data class DeleteSnippet(
+    @JsonProperty("structure_id")
+    val structureId: Long
+)
+
+data class ChangePosition(
+    @JsonProperty("new_position")
+    val newPosition: Long,
+    @JsonProperty("structure_id")
     val structureId: Long
 )

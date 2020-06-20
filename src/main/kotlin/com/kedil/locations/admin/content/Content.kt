@@ -6,7 +6,7 @@ import ContentTextRightPicture
 import com.kedil.config.ContentTypes
 import com.kedil.entities.*
 import com.kedil.entities.contenttypes.ContentTitle
-import com.kedil.entities.contenttypes.Title
+import com.kedil.entities.contenttypes.HeaderTitle
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.locations.KtorExperimentalLocationsAPI
@@ -24,8 +24,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 @KtorExperimentalLocationsAPI
 @Location("/admin/manage") class Manage() {
     @Location("/addOn") data class AddOn(val parent: Manage)
-    @Location("insert") data class Insert(val parent: Manage)
+    @Location("/insert") data class Insert(val parent: Manage)
     @Location("/delete") data class Delete(val parent: Manage)
+    @Location("/changePosition") data class ChangePosition(val parent: Manage)
 }
 
 @KtorExperimentalAPI
@@ -64,7 +65,7 @@ fun Routing.content() {
             when(it) {
                 is ContentTitle -> {
                     transaction {
-                        val title = Title.new {
+                        val title = HeaderTitle.new {
                             title = it.title
                             backgroundImage = it.backgroundImage
                             subTitle = it.subTitle
@@ -128,8 +129,6 @@ fun Routing.content() {
             nextPosition++
         }
 
-        // To add data in between: alle, bei denen position über (Zahl) ist, selecten und dort die position +1 setzen -> an (Zahl) einsetzen
-
         call.respond(HttpStatusCode.Created, mapOf("Message" to "Created content"))
     }
     post<Manage.Insert> {
@@ -150,12 +149,12 @@ fun Routing.content() {
             structure.position
         }
 
-        //var nextPosition = insertData.position
-
         val nextPosition = if(insertData.position > maxPosition + 1)
             (maxPosition + 1)
         else
             insertData.position
+
+        println(nextPosition)
 
         transaction {
             PageStructure.find { (PageStructures.page eq searchedPage.pageID) and (PageStructures.position greaterEq nextPosition) }.map {
@@ -166,7 +165,7 @@ fun Routing.content() {
         when(insertData.content) {
             is ContentTitle -> {
                 transaction {
-                    val title = Title.new {
+                    val title = HeaderTitle.new {
                         title = insertData.content.title
                         backgroundImage = insertData.content.backgroundImage
                         subTitle = insertData.content.subTitle
@@ -239,6 +238,12 @@ fun Routing.content() {
 
         val success = transaction {
             val structure = PageStructure.findById(deleteSnippet.structureId) ?: return@transaction false
+            transaction {
+                PageStructure.find { (PageStructures.page eq structure.page.pageID) and (PageStructures.position greater structure.position) }.map {
+                    str ->
+                    str.position--
+                }
+            }
             deleteObject(structure)
             return@transaction true
         }
@@ -248,6 +253,44 @@ fun Routing.content() {
         } else {
             call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Cannot find Structure!"))
         }
+    }
+    post<Manage.ChangePosition> {
+        val changerSnippet = try {
+            call.receive<ChangePosition>()
+        } catch (e: ContentTransformationException) {
+            return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
+        }
+
+        val structure = transaction {
+            PageStructure.findById(changerSnippet.structureId)
+        } ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Cannot find Structure!"))
+
+        val maxPosition = transaction {
+            val maxStructure = PageStructure.find { PageStructures.page eq structure.page.pageID }.orderBy(PageStructures.position to SortOrder.DESC).limit(1).firstOrNull()
+                    ?: return@transaction 0L
+            maxStructure.position
+        }
+
+        val newPosition = if(changerSnippet.newPosition > maxPosition)
+            maxPosition + 1
+        else
+            changerSnippet.newPosition
+
+        transaction {
+            transaction {
+                PageStructure.find { (PageStructures.page eq structure.page.pageID) and ( (PageStructures.position less structure.position) and (PageStructures.position greaterEq newPosition) ) }.map {
+                    it.position++
+                }
+            }
+            transaction {
+                PageStructure.find { (PageStructures.page eq structure.page.pageID) and ( (PageStructures.position greater structure.position) and (PageStructures.position lessEq newPosition) ) }.map {
+                    it.position--
+                }
+            }
+            structure.position = changerSnippet.newPosition
+        }
+
+        call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully changed index of ${changerSnippet.structureId} to ${changerSnippet.newPosition}"))
     }
 }
 
@@ -259,7 +302,7 @@ fun deleteAllStructures(p: Page) {
 
 fun deleteObject(it: PageStructure) {
     when (it.contentType) {
-        ContentTypes.TITLE -> transaction { Title.findById(it.contentId)?.delete() }
+        ContentTypes.TITLE -> transaction { HeaderTitle.findById(it.contentId)?.delete() }
         ContentTypes.TEXT_NO_PICTURE -> transaction { TextNoPicture.findById(it.contentId)?.delete() }
         ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)?.delete() }
         ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)?.delete() }
@@ -270,4 +313,3 @@ fun deleteObject(it: PageStructure) {
     }
     transaction { it.delete() }
 }
-

@@ -16,3 +16,4 @@ import com.kedil.entities.contenttypes.ContentTitle
 )
 interface ContentType {}
 
+class DelegatedContentList(private val list: List<ContentType>) : List<ContentType> by list

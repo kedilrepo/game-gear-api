@@ -2,7 +2,7 @@ package com.kedil.config
 
 object ContentTypes {
     // Title with picture and subtext
-    const val TITLE = "title"
+    const val TITLE = "headertitle"
 
     // Self-Explaining
     const val TEXT_WITH_LEFT_PICTURE = "textwithleftpicture"

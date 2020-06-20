@@ -8,7 +8,7 @@ import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 
-object Titles : IdTable<Long>() {
+object HeaderTitles : IdTable<Long>() {
     private val snowflake = Snowflake(2)
     override val id = long("titles_id").clientDefault { snowflake.next() }.entityId()
     val title = varchar("title", 300)
@@ -17,12 +17,12 @@ object Titles : IdTable<Long>() {
     override val primaryKey = PrimaryKey(id)
 }
 
-class Title(id: EntityID<Long>) : LongEntity(id) {
-    companion object : LongEntityClass<Title>(Titles)
+class HeaderTitle(id: EntityID<Long>) : LongEntity(id) {
+    companion object : LongEntityClass<HeaderTitle>(HeaderTitles)
 
-    var title by Titles.title
-    var backgroundImage by Titles.backgroundImage
-    var subTitle by Titles.subTitle
+    var title by HeaderTitles.title
+    var backgroundImage by HeaderTitles.backgroundImage
+    var subTitle by HeaderTitles.subTitle
     val titleId
         get() = id.value
 

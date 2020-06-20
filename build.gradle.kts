@@ -38,6 +38,7 @@ dependencies {
     implementation("org.postgresql:postgresql:42.2.9")
     implementation("com.relops:snowflake:1.1")
     implementation("com.zaxxer:HikariCP:3.4.2")
+    implementation("com.google.firebase:firebase-admin:6.14.0")
 }
 
 application {mainClassName = "com.kedil.ApplicationKt"}
