@@ -11,7 +11,9 @@ import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Location
+import io.ktor.locations.get
 import io.ktor.locations.post
+import io.ktor.locations.delete
 import io.ktor.request.ContentTransformationException
 import io.ktor.request.receive
 import io.ktor.response.respond
@@ -27,7 +29,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
     @Location("/insert") data class Insert(val parent: Manage)
     @Location("/delete") data class Delete(val parent: Manage)
     @Location("/changePosition") data class ChangePosition(val parent: Manage)
+    @Location("pages") data class Pages(val parent: Manage)
 }
+
 
 @KtorExperimentalAPI
 @KtorExperimentalLocationsAPI
@@ -291,6 +295,50 @@ fun Routing.content() {
         }
 
         call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully changed index of ${changerSnippet.structureId} to ${changerSnippet.newPosition}"))
+    }
+    get<Manage.Pages> {
+        val pages = transaction {
+            Page.all().map { it.toPageReturnSnippet() }
+        }
+
+        call.respond(HttpStatusCode.Accepted, pages)
+    }
+    post<Manage.Pages> {
+        val pageCreator = try {
+            call.receive<PageCreationSnippet>()
+        } catch (e: ContentTransformationException){
+            return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
+        }
+
+        val exists = transaction {
+            Page.find { Pages.pageName eq pageCreator.pageName }.firstOrNull()
+        }
+        if(exists != null){
+            return@post call.respond(HttpStatusCode.Conflict, mapOf("Error" to "Page already exists"))
+        }
+
+        transaction {
+            Page.new {
+                pageName = pageCreator.pageName
+            }
+        }
+    }
+    delete<Manage.Pages> {
+        val pageToDeleteSnippet = try {
+            call.receive<PageDeletionSnippet>()
+        } catch (e: ContentTransformationException) {
+            return@delete call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
+        }
+
+        val pageToDelete = transaction {
+            Page.findById(pageToDeleteSnippet.pageID)
+        } ?: return@delete call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't find Page"))
+
+        transaction {
+            pageToDelete.delete()
+        }
+
+        call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully deleted Page"))
     }
 }
 

@@ -47,7 +47,7 @@ fun Routing.login() {
 
         transaction {
             UserEntity.find { Users.uid eq uid }.firstOrNull()
-        } ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Invalid User"))
+        } ?: return@post call.respond(HttpStatusCode.Unauthorized, mapOf("Error" to "Invalid User"))
 
         call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successful Login"))
     }

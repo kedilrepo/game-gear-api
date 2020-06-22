@@ -21,4 +21,19 @@ class Page(id: EntityID<Long>) : LongEntity(id) {
     val structures by PageStructure referrersOn PageStructures.page
     val pageID
         get() = id.value
+
+    fun toPageReturnSnippet() = PageReturnSnippet(this.pageName, this.pageID)
 }
+
+data class PageReturnSnippet(
+        val pageName: String,
+        val pageID: Long
+)
+
+data class PageCreationSnippet(
+        val pageName: String
+)
+
+data class PageDeletionSnippet(
+        val pageID: Long
+)
