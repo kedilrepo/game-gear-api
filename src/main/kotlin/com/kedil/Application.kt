@@ -23,6 +23,7 @@ import io.ktor.application.install
 import io.ktor.features.CORS
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
@@ -70,6 +71,7 @@ fun Application.mainModule() {
         allowCredentials = true
         allowNonSimpleContentTypes = true
         allowSameOrigin = true
+        header(HttpHeaders.Authorization)
         anyHost()
     }
 

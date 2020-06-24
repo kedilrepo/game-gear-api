@@ -55,3 +55,4 @@ data class ChangePosition(
     @JsonProperty("structure_id")
     val structureId: Long
 )
+

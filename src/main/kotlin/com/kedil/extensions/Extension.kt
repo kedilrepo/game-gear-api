@@ -26,7 +26,7 @@ val ApplicationCall.accessToken: FirebaseToken
     get() = attributes[OAUTH_AUTHENTICATION]
 
 @KtorExperimentalAPI
-private fun <T : Any> Route.authorized(
+fun Route.authorized(
     callback: Route.() -> Unit
 ): Route = with(callback) {
     intercept(ApplicationCallPipeline.Call) {
