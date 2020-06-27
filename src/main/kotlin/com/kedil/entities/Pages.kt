@@ -22,12 +22,12 @@ class Page(id: EntityID<Long>) : LongEntity(id) {
     val pageID
         get() = id.value
 
-    fun toPageReturnSnippet() = PageReturnSnippet(this.pageName, this.pageID)
+    fun toPageReturnSnippet() = PageReturnSnippet(this.pageName, this.pageID.toString())
 }
 
 data class PageReturnSnippet(
         val pageName: String,
-        val pageID: Long
+        val pageID: String
 )
 
 data class PageCreationSnippet(
@@ -35,5 +35,5 @@ data class PageCreationSnippet(
 )
 
 data class PageDeletionSnippet(
-        val pageID: Long
+        val pageID: String
 )

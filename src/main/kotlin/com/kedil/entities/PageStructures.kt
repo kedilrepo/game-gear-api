@@ -46,13 +46,17 @@ data class InsertSnippet(
 
 data class DeleteSnippet(
     @JsonProperty("structure_id")
-    val structureId: Long
+    val structureId: String
 )
 
 data class ChangePosition(
     @JsonProperty("new_position")
     val newPosition: Long,
     @JsonProperty("structure_id")
-    val structureId: Long
+    val structureId: String
 )
 
+data class EditSnippet(
+    val structureId: String,
+    val content: ContentType
+)
