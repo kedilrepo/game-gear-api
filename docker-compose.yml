@@ -1,0 +1,19 @@
+version: '3'
+
+services:
+  db:
+    image: postgres
+    environment:
+      - POSTGRES_PASSWORD=12345678
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=gamegearapi
+    volumes:
+      - ./data:/var/lib/postgresql/data
+  web:
+    depends_on:
+      - db
+    env_file:
+      - .env
+    build: .
+    ports:
+      - 127.0.0.1:8081:8081
