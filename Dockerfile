@@ -10,6 +10,6 @@ FROM adoptopenjdk/openjdk14-openj9
 
 WORKDIR /usr/app
 
-COPY --from=builder /usr/app/build/install/socialappbackend .
+COPY --from=builder /usr/app/build/install/gamegearapi .
 
-ENTRYPOINT ["/usr/app/bin/socialappbackend"]
+ENTRYPOINT ["/usr/app/bin/gamegearapi"]
