@@ -11,5 +11,6 @@ FROM adoptopenjdk/openjdk14-openj9
 WORKDIR /usr/app
 
 COPY --from=builder /usr/app/build/install/gamegearapi .
+COPY --from=builder /usr/app/src src
 
 ENTRYPOINT ["/usr/app/bin/gamegearapi"]

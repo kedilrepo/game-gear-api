@@ -20,7 +20,7 @@ object Users : IdTable<Long>() {
 class User(id: EntityID<Long>) : LongEntity(id) {
     companion object : LongEntityClass<User>(Users)
 
-    val uid by Users.uid
+    var uid by Users.uid
     val dbId get() = id.value
 }
 
@@ -28,4 +28,9 @@ class User(id: EntityID<Long>) : LongEntity(id) {
 data class LoginSnippet(
     @JsonProperty("id_token")
     val idToken: String
+)
+
+data class UserAddSnippet(
+    @JsonProperty("user_id")
+    val userID: String
 )
