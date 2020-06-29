@@ -12,8 +12,11 @@ import com.kedil.entities.contenttypes.ContentTitle
     JsonSubTypes.Type(ContentTitle::class, name = ContentTypes.TITLE),
     JsonSubTypes.Type(ContentTextRightPicture::class, name = ContentTypes.TEXT_WITH_RIGHT_PICTURE),
     JsonSubTypes.Type(ContentTextLeftPicture::class, name = ContentTypes.TEXT_WITH_LEFT_PICTURE),
-    JsonSubTypes.Type(ContentTextNoPicture::class, name = ContentTypes.TEXT_NO_PICTURE)
+    JsonSubTypes.Type(ContentTextNoPicture::class, name = ContentTypes.TEXT_NO_PICTURE),
+    JsonSubTypes.Type(ContentAd::class, name = ContentTypes.AD)
 )
 interface ContentType {}
 
 class DelegatedContentList(private val list: List<ContentType>) : List<ContentType> by list
+
+class ContentAd : ContentType

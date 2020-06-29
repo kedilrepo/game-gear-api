@@ -12,4 +12,7 @@ object ContentTypes {
 
     // Self-Explaining
     const val TEXT_NO_PICTURE = "textnopicture"
+
+    // Self-Explaining
+    const val AD  = "ad"
 }

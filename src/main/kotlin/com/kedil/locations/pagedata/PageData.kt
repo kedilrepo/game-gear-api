@@ -1,5 +1,6 @@
 package com.kedil.locations.pagedata
 
+import ContentAd
 import DelegatedContentList
 import com.kedil.config.ContentTypes
 import com.kedil.entities.*
@@ -43,6 +44,7 @@ fun Routing.data() {
                     ContentTypes.TEXT_NO_PICTURE -> transaction { TextNoPicture.findById(it.contentId)}?.toSnippet()
                     ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)}?.toSnippet()
                     ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)}?.toSnippet()
+                    ContentTypes.AD -> ContentAd()
 
                     else -> null
                 }

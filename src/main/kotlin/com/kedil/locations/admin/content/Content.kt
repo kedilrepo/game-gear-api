@@ -1,5 +1,6 @@
 package com.kedil.locations.admin.content
 
+import ContentAd
 import ContentTextLeftPicture
 import ContentTextNoPicture
 import ContentTextRightPicture
@@ -131,6 +132,16 @@ fun Routing.content() {
                             }
                         }
                     }
+                    is ContentAd -> {
+                        transaction {
+                            PageStructure.new {
+                                contentType = ContentTypes.AD
+                                contentId = 0
+                                position = nextPosition
+                                page = searchedPage
+                            }
+                        }
+                    }
                     else -> {
                         print("Not found this type of Module")
                     }
@@ -248,6 +259,20 @@ fun Routing.content() {
                         AdminContent(
                                 str.pageStructureId.toString(),
                                 contentNP.toSnippet()
+                        )
+                    }
+                }
+                is ContentAd -> {
+                    transaction {
+                        val str = PageStructure.new {
+                            contentType = ContentTypes.AD
+                            contentId = 0
+                            position = nextPosition
+                            page = searchedPage
+                        }
+                        AdminContent(
+                                str.pageStructureId.toString(),
+                                ContentAd()
                         )
                     }
                 }
@@ -408,6 +433,7 @@ fun Routing.content() {
                                 ContentTypes.TEXT_NO_PICTURE -> transaction { TextNoPicture.findById(it.contentId)}?.toSnippet()
                                 ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)}?.toSnippet()
                                 ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)}?.toSnippet()
+                                ContentTypes.AD -> ContentAd()
 
                                 else -> null
                             }
@@ -498,6 +524,7 @@ fun Routing.content() {
                         }
                     }
                 }
+                ContentTypes.AD -> true
 
                 else -> false
             }
@@ -523,6 +550,7 @@ fun deleteObject(it: PageStructure) {
         ContentTypes.TEXT_NO_PICTURE -> transaction { TextNoPicture.findById(it.contentId)?.delete() }
         ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)?.delete() }
         ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)?.delete() }
+        ContentTypes.AD -> null
 
         else -> {
             print("")
