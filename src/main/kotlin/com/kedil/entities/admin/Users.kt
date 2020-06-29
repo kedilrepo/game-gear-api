@@ -22,6 +22,8 @@ class User(id: EntityID<Long>) : LongEntity(id) {
 
     var uid by Users.uid
     val dbId get() = id.value
+
+    fun toUserSnippet() = UserAddSnippet(this.uid)
 }
 
 

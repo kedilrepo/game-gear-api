@@ -24,6 +24,7 @@ import io.ktor.features.CORS
 import io.ktor.features.ContentNegotiation
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.jackson.jackson
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Locations
@@ -73,6 +74,9 @@ fun Application.mainModule() {
         allowSameOrigin = true
         header(HttpHeaders.Authorization)
         anyHost()
+        method(HttpMethod.Get)
+        method(HttpMethod.Post)
+        method(HttpMethod.Put)
     }
 
     val serviceAccount = FileInputStream("src/game-gear-firebase-adminsdk.json")

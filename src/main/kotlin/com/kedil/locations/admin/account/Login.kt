@@ -9,14 +9,12 @@ import com.kedil.entities.admin.Users
 import com.kedil.extensions.authorized
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
-import io.ktor.locations.KtorExperimentalLocationsAPI
-import io.ktor.locations.Location
-import io.ktor.locations.post
-import io.ktor.locations.put
+import io.ktor.locations.*
 import io.ktor.request.ContentTransformationException
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Routing
+import io.ktor.routing.get
 import io.ktor.util.KtorExperimentalAPI
 import org.jetbrains.exposed.sql.transactions.transaction
 import com.kedil.entities.admin.User as UserEntity
@@ -82,7 +80,7 @@ fun Routing.login() {
             }
 
             if(alreadyExists != null) {
-                return@put call.respond(HttpStatusCode.MultiStatus, mapOf("Error" to "User already valid"))
+                return@put call.respond(HttpStatusCode.Conflict, mapOf("Error" to "User already valid"))
             }
 
 
@@ -110,6 +108,13 @@ fun Routing.login() {
             }
 
             call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully removed User!"))
+        }
+        get<User.Manage> {
+            val users = transaction {
+                UserEntity.all().map { it.toUserSnippet() }
+            }
+
+            call.respond(HttpStatusCode.Accepted, users)
         }
     }
 }
