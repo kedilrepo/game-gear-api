@@ -1,5 +1,6 @@
 package com.kedil
 
+import Infoboxs
 import TextLeftPictures
 import TextNoPictures
 import TextRightPictures
@@ -11,6 +12,7 @@ import com.kedil.config.Config
 import com.kedil.entities.PageStructures
 import com.kedil.entities.Pages
 import com.kedil.entities.admin.Users
+import com.kedil.entities.contenttypes.ComparisonTables
 import com.kedil.entities.contenttypes.HeaderTitles
 import com.kedil.locations.admin.account.login
 import com.kedil.locations.admin.content.content
@@ -59,7 +61,7 @@ fun Application.mainModule() {
     Database.connect(ds)
 
     transaction {
-        SchemaUtils.createMissingTablesAndColumns(Pages, PageStructures, HeaderTitles, TextLeftPictures, TextRightPictures, TextNoPictures, Users)
+        SchemaUtils.createMissingTablesAndColumns(Pages, PageStructures, HeaderTitles, TextLeftPictures, TextRightPictures, TextNoPictures, Users, Infoboxs, ComparisonTables)
     }
 
     install(ContentNegotiation) {

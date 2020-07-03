@@ -15,4 +15,10 @@ object ContentTypes {
 
     // Self-Explaining
     const val AD  = "ad"
+
+    // Self-Explaining
+    const val INFO_BOX = "infobox"
+
+    // Self-Explaining
+    const val COMPARISON_TABLE = "comparisontable"
 }

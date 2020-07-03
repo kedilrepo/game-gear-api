@@ -2,8 +2,10 @@ package com.kedil.locations.pagedata
 
 import ContentAd
 import DelegatedContentList
+import Infobox
 import com.kedil.config.ContentTypes
 import com.kedil.entities.*
+import com.kedil.entities.contenttypes.ComparisonTable
 import com.kedil.entities.contenttypes.HeaderTitle
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
@@ -45,6 +47,8 @@ fun Routing.data() {
                     ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)}?.toSnippet()
                     ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)}?.toSnippet()
                     ContentTypes.AD -> ContentAd()
+                    ContentTypes.INFO_BOX -> transaction { Infobox.findById(it.contentId)}?.toSnippet()
+                    ContentTypes.COMPARISON_TABLE -> transaction { ComparisonTable.findById(it.contentId)}?.toSnippet()
 
                     else -> null
                 }

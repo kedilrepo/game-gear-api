@@ -1,12 +1,15 @@
 package com.kedil.locations.admin.content
 
 import ContentAd
+import ContentInfobox
 import ContentTextLeftPicture
 import ContentTextNoPicture
 import ContentTextRightPicture
 import com.kedil.config.ContentTypes
 import com.kedil.entities.*
 import com.kedil.entities.admin.AdminContent
+import com.kedil.entities.contenttypes.ComparisonTable
+import com.kedil.entities.contenttypes.ContentComparisonTable
 import com.kedil.entities.contenttypes.ContentTitle
 import com.kedil.entities.contenttypes.HeaderTitle
 import io.ktor.application.call
@@ -137,6 +140,32 @@ fun Routing.content() {
                             PageStructure.new {
                                 contentType = ContentTypes.AD
                                 contentId = 0
+                                position = nextPosition
+                                page = searchedPage
+                            }
+                        }
+                    }
+                    is ContentInfobox -> {
+                        transaction {
+                            val contentInfo = Infobox.new {
+                                info = it.info
+                            }
+                            PageStructure.new {
+                                contentType = ContentTypes.INFO_BOX
+                                contentId = contentInfo.infoboxId
+                                position = nextPosition
+                                page = searchedPage
+                            }
+                        }
+                    }
+                    is ContentComparisonTable -> {
+                        transaction {
+                            val contentTable = ComparisonTable.new {
+                                json = it.json
+                            }
+                            PageStructure.new {
+                                contentType = ContentTypes.COMPARISON_TABLE
+                                contentId = contentTable.tableId
                                 position = nextPosition
                                 page = searchedPage
                             }
@@ -273,6 +302,40 @@ fun Routing.content() {
                         AdminContent(
                                 str.pageStructureId.toString(),
                                 ContentAd()
+                        )
+                    }
+                }
+                is ContentInfobox -> {
+                    transaction {
+                        val contentInfo = Infobox.new {
+                            info = insertData.content.info
+                        }
+                        val str = PageStructure.new {
+                            contentType = ContentTypes.INFO_BOX
+                            contentId = contentInfo.infoboxId
+                            position = nextPosition
+                            page = searchedPage
+                        }
+                        AdminContent(
+                            str.pageStructureId.toString(),
+                            contentInfo.toSnippet()
+                        )
+                    }
+                }
+                is ContentComparisonTable -> {
+                    transaction {
+                        val contentTable = ComparisonTable.new {
+                            json = insertData.content.json
+                        }
+                        val str = PageStructure.new {
+                            contentType = ContentTypes.COMPARISON_TABLE
+                            contentId = contentTable.tableId
+                            position = nextPosition
+                            page = searchedPage
+                        }
+                        AdminContent(
+                                str.pageStructureId.toString(),
+                                contentTable.toSnippet()
                         )
                     }
                 }
@@ -434,6 +497,8 @@ fun Routing.content() {
                                 ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)}?.toSnippet()
                                 ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)}?.toSnippet()
                                 ContentTypes.AD -> ContentAd()
+                                ContentTypes.INFO_BOX -> transaction { Infobox.findById(it.contentId)}?.toSnippet()
+                                ContentTypes.COMPARISON_TABLE -> transaction { ComparisonTable.findById(it.contentId)}?.toSnippet()
 
                                 else -> null
                             }
@@ -525,6 +590,34 @@ fun Routing.content() {
                     }
                 }
                 ContentTypes.AD -> true
+                ContentTypes.INFO_BOX -> transaction {
+                    val infobox = Infobox.findById(structure.contentId)
+                    if(infobox == null){
+                        structure.delete()
+                        return@transaction false
+                    } else {
+                        if(editSnippet.content !is ContentInfobox) {
+                            return@transaction false
+                        } else {
+                            infobox.info = editSnippet.content.info
+                            return@transaction true
+                        }
+                    }
+                }
+                ContentTypes.COMPARISON_TABLE -> transaction {
+                    val comparisonTable = ComparisonTable.findById(structure.contentId)
+                    if(comparisonTable == null) {
+                        structure.delete()
+                        return@transaction false
+                    } else {
+                        if(editSnippet.content !is ContentComparisonTable) {
+                            return@transaction false
+                        } else {
+                            comparisonTable.json = editSnippet.content.json
+                            return@transaction true
+                        }
+                    }
+                }
 
                 else -> false
             }
@@ -551,6 +644,8 @@ fun deleteObject(it: PageStructure) {
         ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)?.delete() }
         ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)?.delete() }
         ContentTypes.AD -> null
+        ContentTypes.INFO_BOX -> transaction { Infobox.findById(it.contentId)?.delete() }
+        ContentTypes.COMPARISON_TABLE -> transaction { ComparisonTable.findById(it.contentId)?.delete() }
 
         else -> {
             print("")
