@@ -37,3 +37,8 @@ data class PageCreationSnippet(
 data class PageDeletionSnippet(
         val pageID: String
 )
+
+data class PageEditSnippet(
+        val pageID: String,
+        val newPageName: String
+)

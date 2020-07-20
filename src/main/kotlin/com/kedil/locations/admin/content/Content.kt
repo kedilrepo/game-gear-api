@@ -35,6 +35,7 @@ import java.lang.NumberFormatException
     @Location("/changePosition") data class ChangePosition(val parent: Manage)
     @Location("/pages") data class Pages(val parent: Manage) {
         @Location("/delete") data class PageDelete(val parent: Pages)
+        @Location("/edit") data class PageEdit(val parent: Pages)
     }
     @Location("/structures") data class Structures(val parent: Manage) {
         @Location("/edit") data class StructureEditor(val parent: Structures)
@@ -476,6 +477,36 @@ fun Routing.content() {
             }
 
             call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully deleted Page"))
+        }
+        post<Manage.Pages.PageEdit> {
+            val pageToEditSnippet = try {
+                call.receive<PageEditSnippet>()
+            } catch (e: ContentTransformationException) {
+                return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
+            }
+
+            val exists = transaction {
+                Page.find { Pages.pageName eq pageToEditSnippet.newPageName }.firstOrNull()
+            }
+            if(exists != null){
+                return@post call.respond(HttpStatusCode.Conflict, mapOf("Error" to "Pagename already in use"))
+            }
+
+            val pageIdLong = try {
+                pageToEditSnippet.pageID.toLong()
+            } catch (e: NumberFormatException) {
+                return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "No valid StructureId"))
+            }
+
+            val pageToEdit = transaction {
+                Page.findById(pageIdLong)
+            }?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't find Page"))
+
+            transaction {
+                pageToEdit.pageName = pageToEditSnippet.newPageName;
+            }
+
+            call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully edited name"))
         }
         post<Manage.Structures>{
             val pageCreator = try {
