@@ -80,6 +80,7 @@ fun Routing.content() {
                         transaction {
                             val title = HeaderTitle.new {
                                 title = it.title
+                                lightTitle = it.lightTitle
                                 backgroundImage = it.backgroundImage
                                 subTitle = it.subTitle
                             }
@@ -220,6 +221,7 @@ fun Routing.content() {
                     transaction {
                         val title = HeaderTitle.new {
                             title = insertData.content.title
+                            lightTitle = insertData.content.lightTitle
                             backgroundImage = insertData.content.backgroundImage
                             subTitle = insertData.content.subTitle
                         }
@@ -536,6 +538,7 @@ fun Routing.content() {
                             return@transaction false
                         } else {
                             headerTitle.title = editSnippet.content.title
+                            headerTitle.lightTitle = editSnippet.content.lightTitle
                             headerTitle.backgroundImage = editSnippet.content.backgroundImage
                             headerTitle.subTitle = editSnippet.content.subTitle
                             return@transaction true
