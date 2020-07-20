@@ -12,6 +12,9 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.locations.KtorExperimentalLocationsAPI
 import io.ktor.locations.Location
 import io.ktor.locations.get
+import io.ktor.locations.post
+import io.ktor.request.ContentTransformationException
+import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Routing
 import org.jetbrains.exposed.sql.SortOrder
@@ -21,22 +24,26 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 
 @OptIn(KtorExperimentalLocationsAPI::class)
-@Location("/data") class Data() {
-    @Location("/{pagename}") data class DataPage(val parent: Data, val pagename: String)
-}
+@Location("/data") class Data()
 
 
 @OptIn(KtorExperimentalLocationsAPI::class)
 fun Routing.data() {
     get<Data> {
-        call.respond(HttpStatusCode.BadRequest, mapOf("Message" to "Please provide the pagename you want to get the data for."))
+        call.respond(HttpStatusCode.BadRequest, mapOf("Message" to "Please provide the pagename you want to get the data for. (and do a post-request)"))
     }
-    get<Data.DataPage> {
-        pageName ->
-        val searchedPage = transaction {
-            Page.find { Pages.pageName eq pageName.pagename }.firstOrNull()
+    post<Data> {
+
+        val pageName = try {
+            call.receive<PageCreationSnippet>()
+        } catch (e: ContentTransformationException) {
+            return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
         }
-                ?: return@get call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
+
+        val searchedPage = transaction {
+            Page.find { Pages.pageName eq pageName.pageName }.firstOrNull()
+        }
+                ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
 
 
         val returnSnippet = transaction {
