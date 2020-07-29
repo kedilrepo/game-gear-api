@@ -1,17 +1,7 @@
 package com.kedil.locations.admin.content
 
-import ContentAd
-import ContentInfobox
-import ContentTextLeftPicture
-import ContentTextNoPicture
-import ContentTextRightPicture
-import com.kedil.config.ContentTypes
 import com.kedil.entities.*
 import com.kedil.entities.admin.AdminContent
-import com.kedil.entities.contenttypes.ComparisonTable
-import com.kedil.entities.contenttypes.ContentComparisonTable
-import com.kedil.entities.contenttypes.ContentTitle
-import com.kedil.entities.contenttypes.HeaderTitle
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.locations.*
@@ -19,7 +9,6 @@ import io.ktor.request.ContentTransformationException
 import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Routing
-import io.ktor.routing.get
 import com.kedil.extensions.authorized
 import io.ktor.util.KtorExperimentalAPI
 import org.jetbrains.exposed.sql.SortOrder
@@ -76,107 +65,7 @@ fun Routing.content() {
 
             // Add Data now just add the end (append)
             toManageData.content.map {
-                when(it) {
-                    is ContentTitle -> {
-                        transaction {
-                            val title = HeaderTitle.new {
-                                title = it.title
-                                lightTitle = it.lightTitle
-                                backgroundImage = it.backgroundImage
-                                subTitle = it.subTitle
-                            }
-                            PageStructure.new {
-                                contentType = ContentTypes.TITLE
-                                contentId = title.titleId
-                                position = nextPosition
-                                page = searchedPage
-                            }
-                        }
-                    }
-                    is ContentTextRightPicture -> {
-                        transaction {
-                            val contentTRP = TextRightPicture.new {
-                                title = it.title
-                                imageUrl = it.imageUrl
-                                mainText = it.mainText
-                            }
-                            PageStructure.new {
-                                contentType = ContentTypes.TEXT_WITH_RIGHT_PICTURE
-                                contentId = contentTRP.trpId
-                                position = nextPosition
-                                page = searchedPage
-                            }
-                        }
-                    }
-                    is ContentTextLeftPicture -> {
-                        transaction {
-                            val contentTLP = TextLeftPicture.new {
-                                title = it.title
-                                imageUrl = it.imageUrl
-                                mainText = it.mainText
-                            }
-                            PageStructure.new {
-                                contentType = ContentTypes.TEXT_WITH_LEFT_PICTURE
-                                contentId = contentTLP.tlpId
-                                position = nextPosition
-                                page = searchedPage
-                            }
-                        }
-                    }
-                    is ContentTextNoPicture -> {
-                        transaction {
-                            val contentNP = TextNoPicture.new {
-                                title = it.title
-                                mainText = it.mainText
-                            }
-                            PageStructure.new {
-                                contentType = ContentTypes.TEXT_NO_PICTURE
-                                contentId = contentNP.tnpId
-                                position = nextPosition
-                                page = searchedPage
-                            }
-                        }
-                    }
-                    is ContentAd -> {
-                        transaction {
-                            PageStructure.new {
-                                contentType = ContentTypes.AD
-                                contentId = 0
-                                position = nextPosition
-                                page = searchedPage
-                            }
-                        }
-                    }
-                    is ContentInfobox -> {
-                        transaction {
-                            val contentInfo = Infobox.new {
-                                info = it.info
-                            }
-                            PageStructure.new {
-                                contentType = ContentTypes.INFO_BOX
-                                contentId = contentInfo.infoboxId
-                                position = nextPosition
-                                page = searchedPage
-                            }
-                        }
-                    }
-                    is ContentComparisonTable -> {
-                        transaction {
-                            val contentTable = ComparisonTable.new {
-                                json = it.json
-                            }
-                            PageStructure.new {
-                                contentType = ContentTypes.COMPARISON_TABLE
-                                contentId = contentTable.tableId
-                                position = nextPosition
-                                page = searchedPage
-                            }
-                        }
-                    }
-                    else -> {
-                        print("Not found this type of Module")
-                    }
-                }
+                it.createNew(newPosition = nextPosition, newPage = searchedPage)
                 nextPosition++
             }
 
@@ -217,137 +106,7 @@ fun Routing.content() {
                 }
             }
 
-            val newStructure = when(insertData.content) {
-                is ContentTitle -> {
-                    transaction {
-                        val title = HeaderTitle.new {
-                            title = insertData.content.title
-                            lightTitle = insertData.content.lightTitle
-                            backgroundImage = insertData.content.backgroundImage
-                            subTitle = insertData.content.subTitle
-                        }
-                        val str = PageStructure.new {
-                            contentType = ContentTypes.TITLE
-                            contentId = title.titleId
-                            position = nextPosition
-                            page = searchedPage
-                        }
-                        AdminContent(
-                                str.pageStructureId.toString(),
-                                title.toSnippet()
-                        )
-                    }
-                }
-                is ContentTextRightPicture -> {
-                    transaction {
-                        val contentTRP = TextRightPicture.new {
-                            title = insertData.content.title
-                            imageUrl = insertData.content.imageUrl
-                            mainText = insertData.content.mainText
-                        }
-                        val str = PageStructure.new {
-                            contentType = ContentTypes.TEXT_WITH_RIGHT_PICTURE
-                            contentId = contentTRP.trpId
-                            position = nextPosition
-                            page = searchedPage
-                        }
-                        AdminContent(
-                                str.pageStructureId.toString(),
-                                contentTRP.toSnippet()
-                        )
-                    }
-                }
-                is ContentTextLeftPicture -> {
-                    transaction {
-                        val contentTLP = TextLeftPicture.new {
-                            title = insertData.content.title
-                            imageUrl = insertData.content.imageUrl
-                            mainText = insertData.content.mainText
-                        }
-                        val str = PageStructure.new {
-                            contentType = ContentTypes.TEXT_WITH_LEFT_PICTURE
-                            contentId = contentTLP.tlpId
-                            position = nextPosition
-                            page = searchedPage
-                        }
-                        AdminContent(
-                                str.pageStructureId.toString(),
-                                contentTLP.toSnippet()
-                        )
-                    }
-                }
-                is ContentTextNoPicture -> {
-                    transaction {
-                        val contentNP = TextNoPicture.new {
-                            title = insertData.content.title
-                            mainText = insertData.content.mainText
-                        }
-                        val str = PageStructure.new {
-                            contentType = ContentTypes.TEXT_NO_PICTURE
-                            contentId = contentNP.tnpId
-                            position = nextPosition
-                            page = searchedPage
-                        }
-                        AdminContent(
-                                str.pageStructureId.toString(),
-                                contentNP.toSnippet()
-                        )
-                    }
-                }
-                is ContentAd -> {
-                    transaction {
-                        val str = PageStructure.new {
-                            contentType = ContentTypes.AD
-                            contentId = 0
-                            position = nextPosition
-                            page = searchedPage
-                        }
-                        AdminContent(
-                                str.pageStructureId.toString(),
-                                ContentAd()
-                        )
-                    }
-                }
-                is ContentInfobox -> {
-                    transaction {
-                        val contentInfo = Infobox.new {
-                            info = insertData.content.info
-                        }
-                        val str = PageStructure.new {
-                            contentType = ContentTypes.INFO_BOX
-                            contentId = contentInfo.infoboxId
-                            position = nextPosition
-                            page = searchedPage
-                        }
-                        AdminContent(
-                            str.pageStructureId.toString(),
-                            contentInfo.toSnippet()
-                        )
-                    }
-                }
-                is ContentComparisonTable -> {
-                    transaction {
-                        val contentTable = ComparisonTable.new {
-                            json = insertData.content.json
-                        }
-                        val str = PageStructure.new {
-                            contentType = ContentTypes.COMPARISON_TABLE
-                            contentId = contentTable.tableId
-                            position = nextPosition
-                            page = searchedPage
-                        }
-                        AdminContent(
-                                str.pageStructureId.toString(),
-                                contentTable.toSnippet()
-                        )
-                    }
-                }
-                else -> {
-                    print("Not found this type of Module")
-                    null
-                }
-            }
-                    ?: return@post call.respond(HttpStatusCode.MultiStatus, mapOf("Error" to "Type does not exist"))
+            val newStructure = insertData.content.createNew(newPosition = nextPosition, newPage = searchedPage)
 
             call.respond(HttpStatusCode.Created, newStructure)
         }
@@ -524,16 +283,9 @@ fun Routing.content() {
                 PageStructure.find { PageStructures.page eq searchedPage.pageID }.orderBy(PageStructures.position to SortOrder.ASC).map {
                     AdminContent(
                             it.pageStructureId.toString(),
-                            when (it.contentType) {
-                                ContentTypes.TITLE -> transaction { HeaderTitle.findById(it.contentId) }?.toSnippet()
-                                ContentTypes.TEXT_NO_PICTURE -> transaction { TextNoPicture.findById(it.contentId)}?.toSnippet()
-                                ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)}?.toSnippet()
-                                ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)}?.toSnippet()
-                                ContentTypes.AD -> ContentAd()
-                                ContentTypes.INFO_BOX -> transaction { Infobox.findById(it.contentId)}?.toSnippet()
-                                ContentTypes.COMPARISON_TABLE -> transaction { ComparisonTable.findById(it.contentId)}?.toSnippet()
-
-                                else -> null
+                            when (val i = it.content()) {
+                                null -> null
+                                else -> i.toSnippet()
                             }
                     )
                 }
@@ -558,102 +310,15 @@ fun Routing.content() {
                 PageStructure.findById(structureIdLong)
             } ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Structure not found"))
 
-            val success = when(structure.contentType) {
-                ContentTypes.TITLE -> transaction {
-                    val headerTitle = HeaderTitle.findById(structure.contentId)
-                    if(headerTitle == null) {
-                        structure.delete()
-                        return@transaction false
-                    } else {
-                        if(editSnippet.content !is ContentTitle) {
-                            return@transaction false
-                        } else {
-                            headerTitle.title = editSnippet.content.title
-                            headerTitle.lightTitle = editSnippet.content.lightTitle
-                            headerTitle.backgroundImage = editSnippet.content.backgroundImage
-                            headerTitle.subTitle = editSnippet.content.subTitle
-                            return@transaction true
-                        }
-                    }
-                }
-                ContentTypes.TEXT_NO_PICTURE -> transaction {
-                    val textNoPicture = TextNoPicture.findById(structure.contentId)
-                    if(textNoPicture == null) {
-                        structure.delete()
-                        return@transaction false
-                    } else {
-                        if(editSnippet.content !is ContentTextNoPicture) {
-                            return@transaction false
-                        } else {
-                            textNoPicture.title = editSnippet.content.title
-                            textNoPicture.mainText = editSnippet.content.mainText
-                            return@transaction true
-                        }
-                    }
-                }
-                ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction {
-                    val textLeftPicture = TextLeftPicture.findById(structure.contentId)
-                    if(textLeftPicture == null) {
-                        structure.delete()
-                        return@transaction false
-                    } else {
-                        if(editSnippet.content !is ContentTextLeftPicture) {
-                            return@transaction false
-                        } else {
-                            textLeftPicture.title = editSnippet.content.title
-                            textLeftPicture.mainText = editSnippet.content.mainText
-                            textLeftPicture.imageUrl = editSnippet.content.imageUrl
-                            return@transaction true
-                        }
-                    }
-                }
-                ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction {
-                    val textRightPicture = TextRightPicture.findById(structure.contentId)
-                    if(textRightPicture == null) {
-                        structure.delete()
-                        return@transaction false
-                    } else {
-                        if(editSnippet.content !is ContentTextRightPicture) {
-                            return@transaction false
-                        } else {
-                            textRightPicture.title = editSnippet.content.title
-                            textRightPicture.mainText = editSnippet.content.mainText
-                            textRightPicture.imageUrl = editSnippet.content.imageUrl
-                            return@transaction true
-                        }
-                    }
-                }
-                ContentTypes.AD -> true
-                ContentTypes.INFO_BOX -> transaction {
-                    val infobox = Infobox.findById(structure.contentId)
-                    if(infobox == null){
-                        structure.delete()
-                        return@transaction false
-                    } else {
-                        if(editSnippet.content !is ContentInfobox) {
-                            return@transaction false
-                        } else {
-                            infobox.info = editSnippet.content.info
-                            return@transaction true
-                        }
-                    }
-                }
-                ContentTypes.COMPARISON_TABLE -> transaction {
-                    val comparisonTable = ComparisonTable.findById(structure.contentId)
-                    if(comparisonTable == null) {
-                        structure.delete()
-                        return@transaction false
-                    } else {
-                        if(editSnippet.content !is ContentComparisonTable) {
-                            return@transaction false
-                        } else {
-                            comparisonTable.json = editSnippet.content.json
-                            return@transaction true
-                        }
-                    }
-                }
+            val i = structure.content()
 
-                else -> false
+            if(i == null) {
+                call.respond(HttpStatusCode.Accepted, mapOf("Message" to "This structure is not editable (:"))
+            }
+            val success = if(i != null) {
+                editSnippet.content.edit(i)
+            } else {
+                false
             }
 
             if(success) {
@@ -672,18 +337,6 @@ fun deleteAllStructures(p: Page) {
 }
 
 fun deleteObject(it: PageStructure) {
-    when (it.contentType) {
-        ContentTypes.TITLE -> transaction { HeaderTitle.findById(it.contentId)?.delete() }
-        ContentTypes.TEXT_NO_PICTURE -> transaction { TextNoPicture.findById(it.contentId)?.delete() }
-        ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(it.contentId)?.delete() }
-        ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(it.contentId)?.delete() }
-        ContentTypes.AD -> null
-        ContentTypes.INFO_BOX -> transaction { Infobox.findById(it.contentId)?.delete() }
-        ContentTypes.COMPARISON_TABLE -> transaction { ComparisonTable.findById(it.contentId)?.delete() }
-
-        else -> {
-            print("")
-        }
-    }
+    it.content()?.deleteEntity()
     transaction { it.delete() }
 }

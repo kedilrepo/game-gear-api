@@ -1,7 +1,12 @@
 package com.kedil.entities
 
+import ContentEntity
 import ContentType
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kedil.config.ContentTypes
+import com.kedil.entities.contenttypes.Ad
+import com.kedil.entities.contenttypes.ComparisonTable
+import com.kedil.entities.contenttypes.HeaderTitle
 import com.relops.snowflake.Snowflake
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
@@ -9,6 +14,7 @@ import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
 import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.ReferenceOption
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object PageStructures : IdTable<Long>() {
     private val snowflake = Snowflake(0)
@@ -29,6 +35,18 @@ class PageStructure(id: EntityID<Long>) : LongEntity(id) {
     var position by PageStructures.position
     val pageStructureId
         get() = id.value
+    fun content() : ContentEntity?  {
+        return when(contentType) {
+            ContentTypes.TITLE -> transaction { HeaderTitle.findById(contentId) }
+            ContentTypes.TEXT_NO_PICTURE -> transaction { TextNoPicture.findById(contentId) }
+            ContentTypes.TEXT_WITH_LEFT_PICTURE -> transaction { TextLeftPicture.findById(contentId) }
+            ContentTypes.TEXT_WITH_RIGHT_PICTURE -> transaction { TextRightPicture.findById(contentId) }
+            ContentTypes.COMPARISON_TABLE -> transaction { ComparisonTable.findById(contentId) }
+            ContentTypes.INFO_BOX -> transaction { Infobox.findById(contentId) }
+            ContentTypes.AD -> Ad()
+            else -> null
+        }
+    }
 }
 
 

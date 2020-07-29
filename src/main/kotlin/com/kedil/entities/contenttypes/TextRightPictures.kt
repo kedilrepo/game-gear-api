@@ -1,9 +1,14 @@
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.kedil.config.ContentTypes
+import com.kedil.entities.Page
+import com.kedil.entities.PageStructure
+import com.kedil.entities.admin.AdminContent
 import com.relops.snowflake.Snowflake
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
 import org.jetbrains.exposed.dao.id.EntityID
 import org.jetbrains.exposed.dao.id.IdTable
+import org.jetbrains.exposed.sql.transactions.transaction
 
 object TextRightPictures : IdTable<Long>() {
     private val snowflake = Snowflake(3)
@@ -15,7 +20,7 @@ object TextRightPictures : IdTable<Long>() {
     override val primaryKey = PrimaryKey(id)
 }
 
-class TextRightPicture(id: EntityID<Long>) : LongEntity(id) {
+class TextRightPicture(id: EntityID<Long>) : LongEntity(id), ContentEntity {
     companion object : LongEntityClass<TextRightPicture>(TextRightPictures)
 
     var title by TextRightPictures.title
@@ -25,11 +30,53 @@ class TextRightPicture(id: EntityID<Long>) : LongEntity(id) {
     val trpId
         get() = id.value
 
-    fun toSnippet() = ContentTextRightPicture(
+    override fun toSnippet() = ContentTextRightPicture(
         this.title,
         this.imageUrl,
         this.mainText
     )
+
+    override fun deleteEntity() {
+        val it = this
+        transaction {
+            it.delete()
+        }
+    }
 }
 
-data class ContentTextRightPicture(val title: String, @JsonProperty("image_url") val imageUrl: String, @JsonProperty("main_text") val mainText: String) : ContentType
+class ContentTextRightPicture(val title: String, @JsonProperty("image_url") val imageUrl: String, @JsonProperty("main_text") val mainText: String) : ContentType {
+
+    override fun createNew(newPosition: Long, newPage: Page): AdminContent {
+        return transaction {
+            val contentTRP = TextRightPicture.new {
+                this.title = this@ContentTextRightPicture.title
+                this.imageUrl = this@ContentTextRightPicture.imageUrl
+                this.mainText = this@ContentTextRightPicture.mainText
+            }
+            val str = PageStructure.new {
+                contentType = ContentTypes.TEXT_WITH_RIGHT_PICTURE
+                contentId = contentTRP.trpId
+                position = newPosition
+                page = newPage
+            }
+            AdminContent(
+                    str.pageStructureId.toString(),
+                    contentTRP.toSnippet()
+            )
+        }
+    }
+
+    override fun edit(entity: ContentEntity): Boolean {
+        if(entity !is TextRightPicture) {
+            return false
+        }
+
+        transaction {
+            entity.title = title
+            entity.imageUrl = imageUrl
+            entity.mainText = mainText
+        }
+
+        return true
+    }
+}
