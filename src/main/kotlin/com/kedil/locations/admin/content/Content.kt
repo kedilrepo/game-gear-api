@@ -17,17 +17,28 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.lang.NumberFormatException
 
 @KtorExperimentalLocationsAPI
-@Location("/admin/manage") class Manage() {
-    @Location("/addOn") data class AddOn(val parent: Manage)
-    @Location("/insert") data class Insert(val parent: Manage)
-    @Location("/delete") data class Delete(val parent: Manage)
-    @Location("/changePosition") data class ChangePosition(val parent: Manage)
-    @Location("/pages") data class Pages(val parent: Manage) {
-        @Location("/delete") data class PageDelete(val parent: Pages)
-        @Location("/edit") data class PageEdit(val parent: Pages)
+@Location("/admin/manage")
+class Manage() {
+    @Location("/addOn")
+    data class AddOn(val parent: Manage)
+    @Location("/insert")
+    data class Insert(val parent: Manage)
+    @Location("/delete")
+    data class Delete(val parent: Manage)
+    @Location("/changePosition")
+    data class ChangePosition(val parent: Manage)
+    @Location("/pages")
+    data class Pages(val parent: Manage) {
+        @Location("/delete")
+        data class PageDelete(val parent: Pages)
+        @Location("/edit")
+        data class PageEdit(val parent: Pages)
     }
-    @Location("/structures") data class Structures(val parent: Manage) {
-        @Location("/edit") data class StructureEditor(val parent: Structures)
+
+    @Location("/structures")
+    data class Structures(val parent: Manage) {
+        @Location("/edit")
+        data class StructureEditor(val parent: Structures)
     }
 }
 
@@ -46,17 +57,18 @@ fun Routing.content() {
             val searchedPage = transaction {
                 Page.find { Pages.pageName eq toManageData.page }.firstOrNull()
             }
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
+                ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
 
             // Deleted everything on page if set true
-            if(!toManageData.addOn) deleteAllStructures(searchedPage)
+            if (!toManageData.addOn) deleteAllStructures(searchedPage)
 
             // Maybe even more deleting
 
             // Get last position
             val lastPosition = transaction {
-                val structure = PageStructure.find {PageStructures.page eq searchedPage.pageID }.orderBy(PageStructures.position to SortOrder.DESC).limit(1).firstOrNull()
-                        ?: return@transaction 0L
+                val structure = PageStructure.find { PageStructures.page eq searchedPage.pageID }
+                    .orderBy(PageStructures.position to SortOrder.DESC).limit(1).firstOrNull()
+                    ?: return@transaction 0L
                 structure.position
             }
 
@@ -68,6 +80,8 @@ fun Routing.content() {
                 it.createNew(newPosition = nextPosition, newPage = searchedPage)
                 nextPosition++
             }
+
+            searchedPage.updated()
 
             call.respond(HttpStatusCode.Created, mapOf("Message" to "Created content"))
         }
@@ -81,17 +95,18 @@ fun Routing.content() {
             val searchedPage = transaction {
                 Page.find { Pages.pageName eq insertData.page }.firstOrNull()
             }
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
+                ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
 
             val maxPosition = transaction {
-                val structure = PageStructure.find { PageStructures.page eq searchedPage.pageID }.orderBy(PageStructures.position to SortOrder.DESC).limit(1).firstOrNull()
-                        ?: return@transaction 0L
+                val structure = PageStructure.find { PageStructures.page eq searchedPage.pageID }
+                    .orderBy(PageStructures.position to SortOrder.DESC).limit(1).firstOrNull()
+                    ?: return@transaction 0L
                 structure.position
             }
 
             println(insertData.position)
 
-            val nextPosition = if(insertData.position > maxPosition + 1)
+            val nextPosition = if (insertData.position > maxPosition + 1)
                 (maxPosition + 1)
             else
                 insertData.position
@@ -101,16 +116,19 @@ fun Routing.content() {
             println(nextPosition)
 
             transaction {
-                PageStructure.find { (PageStructures.page eq searchedPage.pageID) and (PageStructures.position greaterEq nextPosition) }.map {
-                    it.position++
-                }
+                PageStructure.find { (PageStructures.page eq searchedPage.pageID) and (PageStructures.position greaterEq nextPosition) }
+                    .map {
+                        it.position++
+                    }
             }
 
             val newStructure = insertData.content.createNew(newPosition = nextPosition, newPage = searchedPage)
 
+            searchedPage.updated()
+
             call.respond(HttpStatusCode.Created, newStructure)
         }
-        post<Manage.Delete>{
+        post<Manage.Delete> {
             val deleteSnippet = try {
                 call.receive<DeleteSnippet>()
             } catch (e: ContentTransformationException) {
@@ -126,16 +144,17 @@ fun Routing.content() {
             val success = transaction {
                 val structure = PageStructure.findById(structureIdLong) ?: return@transaction false
                 transaction {
-                    PageStructure.find { (PageStructures.page eq structure.page.pageID) and (PageStructures.position greater structure.position) }.map {
-                        str ->
-                        str.position--
-                    }
+                    PageStructure.find { (PageStructures.page eq structure.page.pageID) and (PageStructures.position greater structure.position) }
+                        .map { str ->
+                            str.position--
+                        }
                 }
+                structure.page.updated()
                 deleteObject(structure)
                 return@transaction true
             }
 
-            if(success) {
+            if (success) {
                 call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully deleted Data"))
             } else {
                 call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Cannot find Structure!"))
@@ -159,31 +178,39 @@ fun Routing.content() {
             } ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Cannot find Structure!"))
 
             val maxPosition = transaction {
-                val maxStructure = PageStructure.find { PageStructures.page eq structure.page.pageID }.orderBy(PageStructures.position to SortOrder.DESC).limit(1).firstOrNull()
-                        ?: return@transaction 0L
+                val maxStructure = PageStructure.find { PageStructures.page eq structure.page.pageID }
+                    .orderBy(PageStructures.position to SortOrder.DESC).limit(1).firstOrNull()
+                    ?: return@transaction 0L
                 maxStructure.position
             }
 
-            val newPosition = if(changerSnippet.newPosition > maxPosition)
+            val newPosition = if (changerSnippet.newPosition > maxPosition)
                 maxPosition + 1
             else
                 changerSnippet.newPosition
 
             transaction {
                 transaction {
-                    PageStructure.find { (PageStructures.page eq structure.page.pageID) and ( (PageStructures.position less structure.position) and (PageStructures.position greaterEq newPosition) ) }.map {
-                        it.position++
-                    }
+                    PageStructure.find { (PageStructures.page eq structure.page.pageID) and ((PageStructures.position less structure.position) and (PageStructures.position greaterEq newPosition)) }
+                        .map {
+                            it.position++
+                        }
                 }
                 transaction {
-                    PageStructure.find { (PageStructures.page eq structure.page.pageID) and ( (PageStructures.position greater structure.position) and (PageStructures.position lessEq newPosition) ) }.map {
-                        it.position--
-                    }
+                    PageStructure.find { (PageStructures.page eq structure.page.pageID) and ((PageStructures.position greater structure.position) and (PageStructures.position lessEq newPosition)) }
+                        .map {
+                            it.position--
+                        }
                 }
                 structure.position = changerSnippet.newPosition
             }
+            transaction { structure.page.updated() }
 
-            call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully changed index of ${changerSnippet.structureId} to ${changerSnippet.newPosition}"))
+
+            call.respond(
+                HttpStatusCode.Accepted,
+                mapOf("Message" to "Successfully changed index of ${changerSnippet.structureId} to ${changerSnippet.newPosition}")
+            )
         }
         get<Manage.Pages> {
             val pages = transaction {
@@ -195,20 +222,21 @@ fun Routing.content() {
         post<Manage.Pages> {
             val pageCreator = try {
                 call.receive<PageCreationSnippet>()
-            } catch (e: ContentTransformationException){
+            } catch (e: ContentTransformationException) {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
             }
 
             val exists = transaction {
                 Page.find { Pages.pageName eq pageCreator.pageName }.firstOrNull()
             }
-            if(exists != null){
+            if (exists != null) {
                 return@post call.respond(HttpStatusCode.Conflict, mapOf("Error" to "Page already exists"))
             }
 
             transaction {
                 Page.new {
                     pageName = pageCreator.pageName
+                    lastEdited = System.currentTimeMillis()
                 }
             }
 
@@ -247,7 +275,7 @@ fun Routing.content() {
             val exists = transaction {
                 Page.find { Pages.pageName eq pageToEditSnippet.newPageName }.firstOrNull()
             }
-            if(exists != null){
+            if (exists != null) {
                 return@post call.respond(HttpStatusCode.Conflict, mapOf("Error" to "Pagename already in use"))
             }
 
@@ -259,34 +287,37 @@ fun Routing.content() {
 
             val pageToEdit = transaction {
                 Page.findById(pageIdLong)
-            }?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't find Page"))
+            } ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't find Page"))
 
             transaction {
                 pageToEdit.pageName = pageToEditSnippet.newPageName;
             }
 
+            pageToEdit.updated()
+
             call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully edited name"))
         }
-        post<Manage.Structures>{
+        post<Manage.Structures> {
             val pageCreator = try {
                 call.receive<PageCreationSnippet>()
-            } catch (e: ContentTransformationException){
+            } catch (e: ContentTransformationException) {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
             }
 
             val searchedPage = transaction {
                 Page.find { Pages.pageName eq pageCreator.pageName }.firstOrNull()
             }
-                    ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
+                ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Page Not Found"))
 
             val returnSnippet = transaction {
-                PageStructure.find { PageStructures.page eq searchedPage.pageID }.orderBy(PageStructures.position to SortOrder.ASC).map {
+                PageStructure.find { PageStructures.page eq searchedPage.pageID }
+                    .orderBy(PageStructures.position to SortOrder.ASC).map {
                     AdminContent(
-                            it.pageStructureId.toString(),
-                            when (val i = it.content()) {
-                                null -> null
-                                else -> i.toSnippet()
-                            }
+                        it.pageStructureId.toString(),
+                        when (val i = it.content()) {
+                            null -> null
+                            else -> i.toSnippet()
+                        }
                     )
                 }
             }
@@ -312,19 +343,24 @@ fun Routing.content() {
 
             val i = structure.content()
 
-            if(i == null) {
+            if (i == null) {
                 call.respond(HttpStatusCode.Accepted, mapOf("Message" to "This structure is not editable (:"))
             }
-            val success = if(i != null) {
+            val success = if (i != null) {
                 editSnippet.content.edit(i)
             } else {
                 false
             }
 
-            if(success) {
+            if (success) {
+                transaction { structure.page.updated() }
+
                 call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully edited Structure"))
             } else {
-                call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Something went wrong while trying to edit Structure"))
+                call.respond(
+                    HttpStatusCode.BadRequest,
+                    mapOf("Error" to "Something went wrong while trying to edit Structure")
+                )
             }
         }
     }
@@ -339,4 +375,10 @@ fun deleteAllStructures(p: Page) {
 fun deleteObject(it: PageStructure) {
     it.content()?.deleteEntity()
     transaction { it.delete() }
+}
+
+fun Page.updated() {
+    transaction {
+        lastEdited = System.currentTimeMillis()
+    }
 }

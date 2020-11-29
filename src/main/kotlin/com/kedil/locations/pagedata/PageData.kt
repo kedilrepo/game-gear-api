@@ -53,6 +53,6 @@ fun Routing.data() {
 
         val toBeSerialized = DelegatedContentList(returnSnippet.filterNotNull())
 
-        call.respond(HttpStatusCode.Accepted, toBeSerialized)
+        call.respond(HttpStatusCode.Accepted, searchedPage.toPageSnippet(toBeSerialized))
     }
 }
