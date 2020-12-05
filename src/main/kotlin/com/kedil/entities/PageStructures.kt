@@ -7,6 +7,7 @@ import com.kedil.config.ContentTypes
 import com.kedil.entities.contenttypes.Ad
 import com.kedil.entities.contenttypes.ComparisonTable
 import com.kedil.entities.contenttypes.HeaderTitle
+import com.kedil.entities.contenttypes.ImageBox
 import com.relops.snowflake.Snowflake
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
@@ -44,6 +45,7 @@ class PageStructure(id: EntityID<Long>) : LongEntity(id) {
             ContentTypes.COMPARISON_TABLE -> transaction { ComparisonTable.findById(contentId) }
             ContentTypes.INFO_BOX -> transaction { Infobox.findById(contentId) }
             ContentTypes.AD -> Ad()
+            ContentTypes.IMAGE_BOX -> transaction { ImageBox.findById(contentId) }
             else -> null
         }
     }

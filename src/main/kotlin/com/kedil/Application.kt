@@ -12,10 +12,15 @@ import com.kedil.config.Config
 import com.kedil.entities.PageStructures
 import com.kedil.entities.Pages
 import com.kedil.entities.admin.Users
+import com.kedil.entities.blog.Blog
+import com.kedil.entities.blog.BlogStructures
+import com.kedil.entities.blog.Blogs
 import com.kedil.entities.contenttypes.ComparisonTables
 import com.kedil.entities.contenttypes.HeaderTitles
+import com.kedil.entities.contenttypes.ImageBoxs
 import com.kedil.locations.admin.account.login
 import com.kedil.locations.admin.content.content
+import com.kedil.locations.blog.blog
 import com.kedil.locations.pagedata.data
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
@@ -42,6 +47,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 import java.io.FileInputStream
 
 
+@KtorExperimentalLocationsAPI
 @KtorExperimentalAPI
 fun main() {
     embeddedServer(Netty, port = 8082, module = Application::mainModule).start(wait = true)
@@ -51,17 +57,26 @@ fun main() {
 @KtorExperimentalLocationsAPI
 @Suppress("unused") // Referenced in application.conf
 fun Application.mainModule() {
-    val config = HikariConfig().apply {
+    println("Config JDBC " + Config.JDBC_STRING)
+
+    /*val config = HikariConfig().apply {
         jdbcUrl = Config.JDBC_STRING
         username = Config.DB_USER
         password = Config.DB_PASSWORD
+    }*/
+    // TODO: Reset to ENV
+    val config = HikariConfig().apply {
+        jdbcUrl = "jdbc:postgresql://192.168.19.66/gamegearapi"
+        username = "postgres"
+        password = "12345678"
     }
+
     val ds = HikariDataSource(config)
 
     Database.connect(ds)
 
     transaction {
-        SchemaUtils.createMissingTablesAndColumns(Pages, PageStructures, HeaderTitles, TextLeftPictures, TextRightPictures, TextNoPictures, Users, Infoboxs, ComparisonTables)
+        SchemaUtils.createMissingTablesAndColumns(Pages, PageStructures, Blogs, BlogStructures, HeaderTitles, TextLeftPictures, TextRightPictures, TextNoPictures, Users, Infoboxs, ComparisonTables, ImageBoxs)
     }
 
     install(ContentNegotiation) {
@@ -92,6 +107,7 @@ fun Application.mainModule() {
 
     routing {
         data()
+        blog()
         content()
         login()
         get("/") {

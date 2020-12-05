@@ -6,6 +6,8 @@ import com.kedil.config.ContentTypes
 import com.kedil.entities.Page
 import com.kedil.entities.PageStructure
 import com.kedil.entities.admin.AdminContent
+import com.kedil.entities.blog.Blog
+import com.kedil.entities.blog.BlogStructure
 import com.relops.snowflake.Snowflake
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
@@ -59,6 +61,24 @@ class ContentComparisonTable(
                    contentTable.toSnippet()
            )
        }
+    }
+
+    override fun createNewBlog(newPosition: Long, newBlog: Blog): AdminContent {
+        return transaction {
+            val contentTable = ComparisonTable.new {
+                this.json = this@ContentComparisonTable.json
+            }
+            val str = BlogStructure.new {
+                contentType = ContentTypes.COMPARISON_TABLE
+                contentId = contentTable.tableId
+                position = newPosition
+                blog = newBlog
+            }
+            AdminContent(
+                str.blogStructureId.toString(),
+                contentTable.toSnippet()
+            )
+        }
     }
 
     override fun edit(entity: ContentEntity): Boolean {

@@ -7,6 +7,8 @@ import com.kedil.config.ContentTypes
 import com.kedil.entities.Page
 import com.kedil.entities.PageStructure
 import com.kedil.entities.admin.AdminContent
+import com.kedil.entities.blog.Blog
+import com.kedil.entities.blog.BlogStructure
 import com.relops.snowflake.Snowflake
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
@@ -58,10 +60,7 @@ class ContentTitle(
 ) : ContentType {
 
     override fun createNew(newPosition: Long, newPage: Page): AdminContent {
-        println(this.title)
         return transaction {
-            println(title)
-            val it = this
             val title = HeaderTitle.new {
                 this.title = this@ContentTitle.title
                 this.lightTitle = this@ContentTitle.lightTitle
@@ -77,6 +76,27 @@ class ContentTitle(
             AdminContent(
                     str.pageStructureId.toString(),
                     title.toSnippet()
+            )
+        }
+    }
+
+    override fun createNewBlog(newPosition: Long, newBlog: Blog): AdminContent {
+        return transaction {
+            val title = HeaderTitle.new {
+                this.title = this@ContentTitle.title
+                this.lightTitle = this@ContentTitle.lightTitle
+                this.backgroundImage = this@ContentTitle.backgroundImage
+                this.subTitle = this@ContentTitle.subTitle
+            }
+            val str = BlogStructure.new {
+                contentType = ContentTypes.TITLE
+                contentId = title.titleId
+                position = newPosition
+                blog = newBlog
+            }
+            AdminContent(
+                str.blogStructureId.toString(),
+                title.toSnippet()
             )
         }
     }

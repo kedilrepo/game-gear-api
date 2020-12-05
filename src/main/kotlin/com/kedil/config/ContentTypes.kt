@@ -21,4 +21,7 @@ object ContentTypes {
 
     // Self-Explaining
     const val COMPARISON_TABLE = "comparisontable"
+
+    // Self-Explaining
+    const val IMAGE_BOX = "imagebox"
 }

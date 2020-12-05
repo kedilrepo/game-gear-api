@@ -3,10 +3,8 @@ import com.kedil.config.ContentTypes
 import com.kedil.entities.Page
 import com.kedil.entities.PageStructure
 import com.kedil.entities.admin.AdminContent
-import com.kedil.entities.contenttypes.ContentAd
-import com.kedil.entities.contenttypes.ContentComparisonTable
-import com.kedil.entities.contenttypes.ContentTitle
-import com.kedil.entities.contenttypes.HeaderTitle
+import com.kedil.entities.blog.Blog
+import com.kedil.entities.contenttypes.*
 import org.jetbrains.exposed.sql.transactions.transaction
 
 
@@ -22,10 +20,13 @@ import org.jetbrains.exposed.sql.transactions.transaction
     JsonSubTypes.Type(ContentTextNoPicture::class, name = ContentTypes.TEXT_NO_PICTURE),
     JsonSubTypes.Type(ContentAd::class, name = ContentTypes.AD),
     JsonSubTypes.Type(ContentInfobox::class, name = ContentTypes.INFO_BOX),
-    JsonSubTypes.Type(ContentComparisonTable::class, name = ContentTypes.COMPARISON_TABLE)
+    JsonSubTypes.Type(ContentComparisonTable::class, name = ContentTypes.COMPARISON_TABLE),
+    JsonSubTypes.Type(ContentImageBox::class, name = ContentTypes.IMAGE_BOX)
 )
 interface ContentType {
     fun createNew(newPosition: Long, newPage: Page) : AdminContent
+
+    fun createNewBlog(newPosition: Long, newBlog: Blog) : AdminContent
 
     fun edit(entity: ContentEntity) : Boolean
 }
@@ -37,4 +38,3 @@ interface ContentEntity {
 }
 
 class DelegatedContentList(private val list: List<ContentType>) : List<ContentType> by list
-

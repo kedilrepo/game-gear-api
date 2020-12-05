@@ -3,6 +3,8 @@ import com.kedil.config.ContentTypes
 import com.kedil.entities.Page
 import com.kedil.entities.PageStructure
 import com.kedil.entities.admin.AdminContent
+import com.kedil.entities.blog.Blog
+import com.kedil.entities.blog.BlogStructure
 import com.relops.snowflake.Snowflake
 import org.jetbrains.exposed.dao.LongEntity
 import org.jetbrains.exposed.dao.LongEntityClass
@@ -57,6 +59,25 @@ class ContentTextNoPicture(val title: String, @JsonProperty("main_text") val mai
             }
             AdminContent(
                 str.pageStructureId.toString(),
+                contentNP.toSnippet()
+            )
+        }
+    }
+
+    override fun createNewBlog(newPosition: Long, newBlog: Blog): AdminContent {
+        return transaction {
+            val contentNP = TextNoPicture.new {
+                this.title = this@ContentTextNoPicture.title
+                this.mainText = this@ContentTextNoPicture.mainText
+            }
+            val str = BlogStructure.new {
+                contentType = ContentTypes.TEXT_NO_PICTURE
+                contentId = contentNP.tnpId
+                position = newPosition
+                blog = newBlog
+            }
+            AdminContent(
+                str.blogStructureId.toString(),
                 contentNP.toSnippet()
             )
         }
