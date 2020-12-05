@@ -59,17 +59,17 @@ fun main() {
 fun Application.mainModule() {
     println("Config JDBC " + Config.JDBC_STRING)
 
-    /*val config = HikariConfig().apply {
+    val config = HikariConfig().apply {
         jdbcUrl = Config.JDBC_STRING
         username = Config.DB_USER
         password = Config.DB_PASSWORD
-    }*/
-    // TODO: Reset to ENV
+    }
+    /*// TODO: Reset to ENV
     val config = HikariConfig().apply {
         jdbcUrl = "jdbc:postgresql://192.168.19.66/gamegearapi"
         username = "postgres"
         password = "12345678"
-    }
+    }*/
 
     val ds = HikariDataSource(config)
 
