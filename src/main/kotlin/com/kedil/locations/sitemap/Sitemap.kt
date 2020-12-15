@@ -28,7 +28,7 @@ class Sitemap {
 @KtorExperimentalLocationsAPI
 fun Routing.sitemap() {
     get<Sitemap> {
-        val simpleDateFormat = SimpleDateFormat("yyyy-mm-dd")
+        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd")
 
         val pages = transaction {
             Page.all()
