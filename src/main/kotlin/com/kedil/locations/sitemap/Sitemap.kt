@@ -36,7 +36,7 @@ fun Routing.sitemap() {
         }
 
         val blogs = transaction {
-            Blog.all().map { "<url><loc>${Config.URL + it.blogUrl}</loc><lastmod>${simpleDateFormat.format(it.lastEdited)}</lastmod><changefreq>monthly</changefreq></url>" }
+            Blog.all().map { "<url><loc>${Config.URL + "blog/" + it.blogUrl}</loc><lastmod>${simpleDateFormat.format(it.lastEdited)}</lastmod><changefreq>monthly</changefreq></url>" }
         }
 
         val defaultPages = defaultUrls.map { "<url><loc>${Config.URL + it}</loc></url>" }
