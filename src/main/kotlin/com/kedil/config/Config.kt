@@ -8,4 +8,6 @@ object Config {
 
 
     val DB_PASSWORD = System.getenv("DB_PASSWORD")
+
+    val URL = "https://game-gear.eu/"
 }

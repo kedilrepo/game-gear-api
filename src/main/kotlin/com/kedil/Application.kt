@@ -22,6 +22,7 @@ import com.kedil.locations.admin.account.login
 import com.kedil.locations.admin.content.content
 import com.kedil.locations.blog.blog
 import com.kedil.locations.pagedata.data
+import com.kedil.locations.sitemap.sitemap
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.application.Application
@@ -64,7 +65,7 @@ fun Application.mainModule() {
         username = Config.DB_USER
         password = Config.DB_PASSWORD
     }
-    /*// TODO: Reset to ENV
+    /* // TODO: Reset to ENV
     val config = HikariConfig().apply {
         jdbcUrl = "jdbc:postgresql://192.168.19.66/gamegearapi"
         username = "postgres"
@@ -110,6 +111,7 @@ fun Application.mainModule() {
         blog()
         content()
         login()
+        sitemap()
         get("/") {
             call.respondText("Welcome to the Game-Gear API", ContentType.Text.Plain)
         }
