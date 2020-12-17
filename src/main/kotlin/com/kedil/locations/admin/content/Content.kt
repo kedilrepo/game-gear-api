@@ -1,21 +1,32 @@
 package com.kedil.locations.admin.content
 
+import com.kedil.config.Config
 import com.kedil.entities.*
 import com.kedil.entities.admin.AdminContent
+import com.kedil.entities.admin.FtpSnippet
 import com.kedil.entities.blog.*
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
 import io.ktor.locations.*
-import io.ktor.request.ContentTransformationException
-import io.ktor.request.receive
 import io.ktor.response.respond
 import io.ktor.routing.Routing
 import com.kedil.extensions.authorized
+import io.ktor.http.content.*
+import io.ktor.request.*
 import io.ktor.util.KtorExperimentalAPI
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
+import org.apache.commons.net.ftp.FTP
+import org.apache.commons.net.ftp.FTPReply
+import org.apache.commons.net.ftp.FTPSClient
 import org.jetbrains.exposed.sql.SortOrder
 import org.jetbrains.exposed.sql.and
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.io.*
 import java.lang.NumberFormatException
+
 
 @KtorExperimentalLocationsAPI
 @Location("/admin/manage")
@@ -70,6 +81,9 @@ class Manage() {
         @Location("/edit")
         data class StructureEditor(val parent: Structures)
     }
+
+    @Location("/upload")
+    data class Upload(val parent: Manage)
 }
 
 
@@ -489,7 +503,10 @@ fun Routing.content() {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
             }
 
-            if(blogCreator.blogName.isEmpty()) return@post call.respond(HttpStatusCode.Conflict, mapOf("Error" to "Page already exists"))
+            if (blogCreator.blogName.isEmpty()) return@post call.respond(
+                HttpStatusCode.Conflict,
+                mapOf("Error" to "Page already exists")
+            )
 
             val exists = transaction {
                 Blog.find { Blogs.blogName eq blogCreator.blogName }.firstOrNull()
@@ -540,7 +557,10 @@ fun Routing.content() {
                 return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't transform JSON"))
             }
 
-            if(blogToEditSnippet.newBlogName.isEmpty()) return@post call.respond(HttpStatusCode.Conflict, mapOf("Error" to "Page already exists"))
+            if (blogToEditSnippet.newBlogName.isEmpty()) return@post call.respond(
+                HttpStatusCode.Conflict,
+                mapOf("Error" to "Page already exists")
+            )
 
             val blogIdLong = try {
                 blogToEditSnippet.blogID.toLong()
@@ -552,7 +572,10 @@ fun Routing.content() {
                 Blog.findById(blogIdLong)
             } ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("Error" to "Can't find Blog"))
 
-            if (transaction { blogToEditSnippet.newBlogName == blogToEdit.blogName }) return@post call.respond(HttpStatusCode.Accepted, mapOf("Message" to "Successfully edited name"))
+            if (transaction { blogToEditSnippet.newBlogName == blogToEdit.blogName }) return@post call.respond(
+                HttpStatusCode.Accepted,
+                mapOf("Message" to "Successfully edited name")
+            )
 
             val exists = transaction {
                 Blog.find { Blogs.blogName eq blogToEditSnippet.newBlogName }.firstOrNull()
@@ -638,8 +661,105 @@ fun Routing.content() {
                 )
             }
         }
+        post<Manage.Upload> {
+            val multipart = call.receiveMultipart()
+
+            multipart.forEachPart { part ->
+                if (part is PartData.FileItem) {
+                    if (part.originalFileName == null) return@forEachPart call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("Error" to "No Filename provided")
+                    )
+                    val ext = File(part.originalFileName).extension
+                    if (!allowedFileExtensions.contains(ext)) return@forEachPart call.respond(
+                        HttpStatusCode.BadRequest,
+                        mapOf("Error" to "Wrong file format")
+                    )
+                    val file = File(part.originalFileName)
+                    part.streamProvider()
+                        .use { input -> file.outputStream().buffered().use { output -> input.copyToSuspend(output) } }
+
+
+                    val client = FTPSClient(false)
+                    try {
+                        client.connect(Config.FTP_HOST)
+
+                        val reply = client.replyCode
+
+                        if (!FTPReply.isPositiveCompletion(reply)) {
+                            client.disconnect()
+                            return@forEachPart call.respond(HttpStatusCode.InternalServerError)
+                        }
+
+                        try {
+                            if (!client.login(Config.FTP_USER, Config.FTP_PASSWORD)) {
+                                client.logout()
+                                return@forEachPart call.respond(HttpStatusCode.InternalServerError)
+                            }
+
+                            client.setFileType(FTP.BINARY_FILE_TYPE)
+                            client.enterLocalPassiveMode()
+                            client.execPBSZ(0)
+                            client.execPROT("P")
+
+                            val inputStream = FileInputStream(file)
+                            val done = client.storeFile(part.originalFileName, inputStream)
+                            inputStream.close()
+
+                            if (done) {
+                                call.respond(
+                                    HttpStatusCode.Created,
+                                    FtpSnippet(Config.URL + "public/" + part.originalFileName)
+                                )
+                            } else {
+                                return@forEachPart call.respond(HttpStatusCode.InternalServerError)
+                            }
+
+                        } catch (e: Throwable) {
+                            e.printStackTrace()
+                            return@forEachPart call.respond(HttpStatusCode.InternalServerError)
+                        }
+
+
+                    } catch (e: IOException) {
+                        e.printStackTrace()
+                        return@forEachPart call.respond(HttpStatusCode.InternalServerError)
+                    }
+
+                }
+
+                part.dispose()
+            }
+        }
     }
 }
+
+suspend fun InputStream.copyToSuspend(
+    out: OutputStream,
+    bufferSize: Int = DEFAULT_BUFFER_SIZE,
+    yieldSize: Int = 4 * 1024 * 1024,
+    dispatcher: CoroutineDispatcher = Dispatchers.IO
+): Long {
+    return withContext(dispatcher) {
+        val buffer = ByteArray(bufferSize)
+        var bytesCopied = 0L
+        var bytesAfterYield = 0L
+        while (true) {
+            val bytes = read(buffer).takeIf { it >= 0 } ?: break
+            out.write(buffer, 0, bytes)
+            if (bytesAfterYield >= yieldSize) {
+                yield()
+                bytesAfterYield %= yieldSize
+            }
+            bytesCopied += bytes
+            bytesAfterYield += bytes
+        }
+        return@withContext bytesCopied
+    }
+}
+
+val allowedFileExtensions = listOf("png", "gif", "jpeg", "jpg")
+
 
 fun deleteAllStructures(p: Page) {
     p.structures.map {
@@ -669,21 +789,22 @@ fun Blog.updated() {
     }
 }
 
-fun String.nextAvailableBlogUrl() : String {
+fun String.nextAvailableBlogUrl(): String {
 
-    val minified = this.replace("""[^a-zA-Z1-9-]""".toRegex(), "-").replace("""-{2,}""".toRegex(), "-").replace("-$", "")
+    val minified =
+        this.replace("""[^a-zA-Z1-9-]""".toRegex(), "-").replace("""-{2,}""".toRegex(), "-").replace("-$", "")
 
 
     val url = minified.toLowerCase()
     val isAvailable = transaction {
         Blog.find { Blogs.blogUrl eq url }.firstOrNull() == null
     }
-    if(isAvailable) {
+    if (isAvailable) {
         return url
     }
     val finishedUrl = transaction {
         var counter = 0
-        while(Blog.find { Blogs.blogUrl eq ("$url-$counter") }.firstOrNull() != null) {
+        while (Blog.find { Blogs.blogUrl eq ("$url-$counter") }.firstOrNull() != null) {
             counter++
         }
         "$url-$counter"

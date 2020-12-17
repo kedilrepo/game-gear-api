@@ -9,5 +9,11 @@ object Config {
 
     val DB_PASSWORD = System.getenv("DB_PASSWORD")
 
-    val URL = "https://game-gear.eu/"
+    const val URL = "https://game-gear.eu/"
+
+    const val FTP_HOST = "ftp.niggelgame.dev";
+
+    const val FTP_USER = "backend-ftp-game-gear";
+
+    const val FTP_PASSWORD = "!v1Oe63s";
 }

@@ -13,6 +13,7 @@ val logbackVersion = "1.2.3"
 repositories {
     jcenter()
     maven ("https://kotlin.bintray.com/ktor" )
+    mavenCentral()
 }
 
 dependencies {
@@ -39,6 +40,7 @@ dependencies {
     implementation("com.relops:snowflake:1.1")
     implementation("com.zaxxer:HikariCP:3.4.2")
     implementation("com.google.firebase:firebase-admin:6.14.0")
+    implementation("commons-net:commons-net:3.7.2")
 }
 
 application {mainClassName = "com.kedil.ApplicationKt"}
