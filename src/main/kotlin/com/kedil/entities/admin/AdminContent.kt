@@ -8,5 +8,10 @@ data class AdminContent(
 )
 
 data class FtpSnippet(
-        val url: String
+        val url: String,
+        val fileName: String?
+)
+
+data class FtpSnippetWrapper(
+        val files: List<FtpSnippet>
 )

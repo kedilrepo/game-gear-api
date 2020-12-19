@@ -4,6 +4,7 @@ import com.kedil.config.Config
 import com.kedil.entities.*
 import com.kedil.entities.admin.AdminContent
 import com.kedil.entities.admin.FtpSnippet
+import com.kedil.entities.admin.FtpSnippetWrapper
 import com.kedil.entities.blog.*
 import io.ktor.application.call
 import io.ktor.http.HttpStatusCode
@@ -84,6 +85,9 @@ class Manage() {
 
     @Location("/upload")
     data class Upload(val parent: Manage)
+
+    @Location("/files")
+    data class Files(val parent: Manage)
 }
 
 
@@ -709,7 +713,7 @@ fun Routing.content() {
                             if (done) {
                                 call.respond(
                                     HttpStatusCode.Created,
-                                    FtpSnippet(Config.URL + "public/" + part.originalFileName)
+                                    FtpSnippet(Config.URL + "public/" + part.originalFileName, part.originalFileName)
                                 )
                             } else {
                                 return@forEachPart call.respond(HttpStatusCode.InternalServerError)
@@ -729,6 +733,55 @@ fun Routing.content() {
                 }
 
                 part.dispose()
+            }
+        }
+        get<Manage.Files> {
+            val client = FTPSClient(false)
+            try {
+                client.connect(Config.FTP_HOST)
+
+                val reply = client.replyCode
+
+                if (!FTPReply.isPositiveCompletion(reply)) {
+                    client.disconnect()
+                    return@get call.respond(HttpStatusCode.InternalServerError)
+                }
+
+                try {
+                    if (!client.login(Config.FTP_USER, Config.FTP_PASSWORD)) {
+                        client.logout()
+                        return@get call.respond(HttpStatusCode.InternalServerError)
+                    }
+
+                    client.setFileType(FTP.BINARY_FILE_TYPE)
+                    client.enterLocalPassiveMode()
+                    client.execPBSZ(0)
+                    client.execPROT("P")
+
+                    val files = client.listFiles()
+                    println(files)
+                    println(client.listDirectories())
+
+
+                    val snippet = files.map {
+                        if (!it.isDirectory) FtpSnippet(
+                            Config.URL + "public/" + it.name, it.name
+                        ) else null
+                    }
+
+                    call.respond(HttpStatusCode.Accepted, FtpSnippetWrapper(snippet.filterNotNull()))
+
+                    // Config.URL + "public/" + part.originalFileName
+
+                } catch (e: Throwable) {
+                    e.printStackTrace()
+                    return@get call.respond(HttpStatusCode.InternalServerError)
+                }
+
+
+            } catch (e: IOException) {
+                e.printStackTrace()
+                return@get call.respond(HttpStatusCode.InternalServerError)
             }
         }
     }
