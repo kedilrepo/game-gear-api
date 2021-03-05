@@ -43,7 +43,7 @@ fun Routing.sitemap() {
 
         val xml = toSitemap(pages + blogs + defaultPages)
 
-        call.respond(HttpStatusCode.Accepted, xml)
+        call.respondText(xml, ContentType.Application.Xml, HttpStatusCode.Accepted)
     }
     get<Sitemap.Blogs> {
         val blogs = transaction {
